@@ -1,0 +1,1039 @@
+<!DOCTYPE html>
+<html lang="ru">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+    <title>Mage: Чарник + Дневник</title>
+    <style>
+        * {
+            box-sizing: border-box;
+        }
+
+        /* Базовые стили (Светлая тема) */
+        body {
+            background: #f4ecdb;
+            color: #1e2a2e;
+            font-family: 'Segoe UI', Roboto, sans-serif;
+            margin: 0;
+            padding: 20px;
+            transition: background 0.2s, color 0.2s;
+        }
+
+        .sheet {
+            max-width: 1200px;
+            margin: 0 auto;
+            background: #fef9e8;
+            color: #1e2a2e;
+            border-radius: 36px;
+            padding: 24px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.05);
+            transition: background 0.2s, color 0.2s;
+        }
+
+        h1 {
+            color: #3b2a1f;
+            margin-top: 0;
+        }
+
+        h2 {
+            color: #4a3425;
+            border-bottom: 2px solid #ddceb0;
+            padding-bottom: 5px;
+            margin-top: 30px;
+        }
+
+        .card {
+            flex: 1;
+            min-width: 220px;
+            background: rgba(255, 250, 235, 0.9);
+            border-radius: 24px;
+            padding: 14px 18px;
+            border: 1px solid #ddceb0;
+        }
+
+        .stat-item,
+        .track-card,
+        .meter {
+            background: #fff6e6;
+            border-radius: 24px;
+            padding: 12px 20px;
+            text-align: center;
+            flex: 1;
+            min-width: 160px;
+            border: 1px solid #ddceb0;
+        }
+
+        input,
+        textarea,
+        select {
+            width: 100%;
+            padding: 8px 12px;
+            border-radius: 14px;
+            border: 1px solid #ddceb0;
+            background: #fffdf5;
+            font-family: inherit;
+            color: #1e2a2e;
+        }
+
+        .stats-panel,
+        .tracks-grid,
+        .health-will-box,
+        .xp-panel {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 15px;
+            background: #e9dfce;
+            border-radius: 32px;
+            padding: 16px;
+            margin: 20px 0;
+        }
+
+        /* 🛠 ПОЛНОЕ ИСПРАВЛЕНИЕ КОНТРАСТА В ТЕМНОЙ ТЕМЕ */
+        body.dark {
+            background: #121212;
+            color: #e0e0e0;
+        }
+
+        body.dark .sheet {
+            background: #1a2424;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.5);
+        }
+
+        body.dark h1 {
+            color: #ffecbf;
+        }
+
+        body.dark h2 {
+            color: #ffecbf;
+            border-bottom-color: #3a4a4a;
+        }
+
+        body.dark strong {
+            color: #ffffff;
+        }
+
+        body.dark label {
+            color: #cccccc;
+        }
+
+        body.dark .card,
+        body.dark .stat-item,
+        body.dark .track-card,
+        body.dark .meter,
+        body.dark .modal-content {
+            background: #232e2e;
+            border-color: #3a4a4a;
+            color: #e0e0e0;
+        }
+
+        body.dark input,
+        body.dark textarea,
+        body.dark select {
+            background: #182020;
+            color: #ffffff;
+            border-color: #3a4a4a;
+        }
+
+        body.dark .stats-panel,
+        body.dark .tracks-grid,
+        body.dark .health-will-box,
+        body.dark .xp-panel,
+        body.dark .arcana-strip {
+            background: #161f1f;
+        }
+
+        body.dark .arcana-tile {
+            background: #232e2e;
+            border-color: #3a4a4a;
+            color: #e0e0e0;
+        }
+
+        body.dark .stat-value,
+        body.dark .dot,
+        body.dark .square {
+            color: #d6a041;
+        }
+
+        body.dark th {
+            background: #232e2e;
+            color: #ffffff;
+        }
+
+        body.dark td {
+            border-color: #3a4a4a;
+        }
+
+        body.dark .diary-entry {
+            background: #232e2e;
+            border: 1px solid #3a4a4a;
+        }
+
+        /* Общие интерфейсные элементы */
+        .header-bar {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 15px;
+            margin-bottom: 20px;
+        }
+
+        .theme-toggle,
+        button {
+            background: #3b2a1f;
+            border: none;
+            color: #ffecbf;
+            padding: 10px 20px;
+            border-radius: 60px;
+            cursor: pointer;
+            font-weight: bold;
+        }
+
+        body.dark button {
+            background: #5c3f27;
+            color: #ffecbf;
+        }
+
+        .row-grid {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 15px;
+            margin-bottom: 15px;
+        }
+
+        .attr-row,
+        .skill-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 8px;
+            gap: 8px;
+        }
+
+        .clickable-dots,
+        .clickable-squares {
+            display: inline-flex;
+            gap: 4px;
+        }
+
+        .dot,
+        .square {
+            cursor: pointer;
+            font-size: 1.5rem;
+            width: 22px;
+            text-align: center;
+            user-select: none;
+            display: inline-block;
+            color: #8e6d2d;
+        }
+
+        .skill-name {
+            font-weight: 500;
+        }
+
+        /* Сетка Таинств (Arcana) */
+        .arcana-strip {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+            gap: 12px;
+            background: #e9dfce;
+            border-radius: 24px;
+            padding: 16px;
+            margin: 15px 0;
+        }
+
+        .arcana-tile {
+            background: #fff6e6;
+            border-radius: 16px;
+            padding: 10px 14px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border: 1px solid #ddceb0;
+        }
+
+        .points-summary {
+            background: rgba(214, 160, 65, 0.15);
+            border-radius: 48px;
+            padding: 10px 24px;
+            text-align: center;
+            margin: 15px 0;
+            font-weight: bold;
+            color: inherit;
+        }
+
+        body.dark .points-summary {
+            color: #ffecbf;
+        }
+
+        .merit-row {
+            display: flex;
+            flex-wrap: wrap;
+            align-items: center;
+            gap: 10px;
+            margin: 8px 0;
+            padding-bottom: 6px;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 15px 0;
+            border-radius: 12px;
+            overflow: hidden;
+        }
+
+        th {
+            background: #e9dfce;
+            padding: 10px;
+            text-align: left;
+            color: #3b2a1f;
+        }
+
+        td {
+            border: 1px solid rgba(0, 0, 0, 0.1);
+            padding: 6px;
+        }
+
+        /* Стили цифровых счетчиков опыта */
+        .xp-digital-container {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+            margin-top: 8px;
+        }
+
+        .xp-digital-btn {
+            width: 32px;
+            height: 32px;
+            padding: 0;
+            border-radius: 50%;
+            font-size: 1.2rem;
+            line-height: 1;
+        }
+
+        .xp-digital-val {
+            font-size: 1.6rem;
+            font-weight: bold;
+            min-width: 40px;
+            display: inline-block;
+        }
+
+        .modal {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.8);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            visibility: hidden;
+            opacity: 0;
+            transition: 0.2s;
+            z-index: 2000;
+        }
+
+        .modal.visible {
+            visibility: visible;
+            opacity: 1;
+        }
+
+        .modal-content {
+            background: #fff6e6;
+            border-radius: 32px;
+            padding: 24px;
+            max-width: 500px;
+            width: 90%;
+        }
+
+        .diary-entry {
+            background: #f4ecdb;
+            border-radius: 16px;
+            padding: 12px;
+            margin: 8px 0;
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+        }
+
+        .save-notification {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            background: #2e7d32;
+            color: white;
+            padding: 10px 20px;
+            border-radius: 20px;
+            opacity: 0;
+            transition: opacity 0.3s;
+            z-index: 3000;
+            pointer-events: none;
+        }
+    </style>
+</head>
+
+<body class="dark">
+    <div class="sheet">
+        <div class="header-bar">
+            <h1>Mage: The Awakening 2nd Edition</h1>
+            <button id="themeBtn" class="theme-toggle">☀️ Светлая тема</button>
+        </div>
+
+        <div class="row-grid">
+            <div class="card"><label>Теневое имя</label><input type="text" id="shadowName"></div>
+            <div class="card"><label>Концепт</label><input type="text" id="concept"></div>
+            <div class="card"><label>Путь</label><select id="path">
+                    <option>Акантус</option>
+                    <option>Мастигос</option>
+                    <option>Морос</option>
+                    <option>Обримос</option>
+                    <option>Тирсус</option>
+                </select></div>
+        </div>
+        <div class="row-grid">
+            <div class="card"><label>Игрок</label><input type="text" id="player"></div>
+            <div class="card"><label>Добродетель</label><input type="text" id="virtue"></div>
+            <div class="card"><label>Орден</label><select id="order">
+                    <option>Серебряная Лестница</option>
+                    <option>Стражи Завесы</option>
+                    <option>Адамантиновые стрелы</option>
+                    <option>Мистериум</option>
+                    <option>Свободный Совет</option>
+                    <option>Сироты</option>
+                </select></div>
+        </div>
+        <div class="row-grid">
+            <div class="card"><label>Хроника</label><input type="text" id="chronicle"></div>
+            <div class="card"><label>Порок</label><input type="text" id="vice"></div>
+            <div class="card"><label>Наследие</label><input type="text" id="legacy"></div>
+        </div>
+        <div class="points-summary" id="pointsSummary">Атрибуты: 0 | Навыки: 0 | Таинства: 0 | Мериты: 0</div>
+
+        <div class="xp-panel">
+            <div><strong>🎯 Доступный Опыт (XP):</strong>
+                <div class="xp-digital-container" style="display:inline-flex; margin-left:10px;">
+                    <button class="xp-digital-btn" onclick="adjustXp(-1)">-</button>
+                    <span id="xpTotal" class="xp-digital-val">0</span>
+                    <button class="xp-digital-btn" onclick="adjustXp(1)">+</button>
+                </div>
+                <button id="buyUpgradeBtn" style="margin-left:15px;">✨ Стоимость развития</button>
+            </div>
+        </div>
+
+        <h2>Атрибуты</h2>
+        <div class="row-grid">
+            <div class="card"><strong>Физические</strong>
+                <div id="attr-strength" class="attr-row"></div>
+                <div id="attr-dexterity" class="attr-row"></div>
+                <div id="attr-stamina" class="attr-row"></div>
+            </div>
+            <div class="card"><strong>Ментальные</strong>
+                <div id="attr-intelligence" class="attr-row"></div>
+                <div id="attr-wits" class="attr-row"></div>
+                <div id="attr-resolve" class="attr-row"></div>
+            </div>
+            <div class="card"><strong>Социальные</strong>
+                <div id="attr-presence" class="attr-row"></div>
+                <div id="attr-manipulation" class="attr-row"></div>
+                <div id="attr-composure" class="attr-row"></div>
+            </div>
+        </div>
+
+        <h2>Навыки</h2>
+        <div class="row-grid">
+            <div class="card"><strong>Физические</strong>
+                <div id="physical-skills"></div>
+            </div>
+            <div class="card"><strong>Ментальные</strong>
+                <div id="mental-skills"></div>
+            </div>
+            <div class="card"><strong>Социальные</strong>
+                <div id="social-skills"></div>
+            </div>
+        </div>
+
+        <h2>Таинства (Arcana)</h2>
+        <div id="arcanaContainer" class="arcana-strip"></div>
+
+        <h2>Энергия и Состояние</h2>
+        <div class="health-will-box">
+            <div class="meter"><strong>Здоровье (Урон)</strong><br><span id="healthBoxes"></span></div>
+            <div class="meter"><strong>Сила воли (Трата)</strong><br><span id="willpowerBoxes"></span></div>
+            <div class="meter"><strong>Гнозис</strong><br><span id="gnosisBoxes"></span></div>
+            <div class="meter"><strong>Мана</strong><br><span id="manaBoxes"></span></div>
+            <div class="meter"><strong>Мудрость</strong><br><span id="wisdomBoxes"></span></div>
+        </div>
+
+        <h2>Вторичные параметры</h2>
+        <div class="stats-panel">
+            <div class="stat-item"><strong>Размер (Size)</strong><br><input type="number" id="sizeVal" value="5"
+                    style="width:60px; text-align:center; font-size:1.1rem; margin-top:5px;"></div>
+            <div class="stat-item"><strong>Скорость</strong><br><span class="stat-value" id="speedVal">5</span></div>
+            <div class="stat-item"><strong>Защита (Defense)</strong><br><span class="stat-value"
+                    id="defenseVal">0</span></div>
+            <div class="stat-item"><strong>Броня (Armor)</strong><br><input type="number" id="armorVal" value="0"
+                    style="width:60px; text-align:center; font-size:1.1rem; margin-top:5px;"></div>
+            <div class="stat-item"><strong>Инициатива</strong><br><span class="stat-value" id="initModVal">0</span>
+            </div>
+        </div>
+
+        <h2>Счетчики развития (Опыт и Такты)</h2>
+        <div class="tracks-grid">
+            <div class="track-card">
+                <strong>Обычные Такты (Beats)</strong>
+                <div id="beatsBoxes" style="margin-top:5px;"></div>
+            </div>
+            <div class="track-card">
+                <strong>Маг. Такты (Arcane Beats)</strong>
+                <div id="mageBeatsBoxes" style="margin-top:5px;"></div>
+            </div>
+            <div class="track-card">
+                <strong>Магический Опыт (Arcane XP)</strong>
+                <div class="xp-digital-container">
+                    <button class="xp-digital-btn" onclick="adjustArcaneXp(-1)">-</button>
+                    <span id="arcaneXpVal" class="xp-digital-val">0</span>
+                    <button class="xp-digital-btn" onclick="adjustArcaneXp(1)">+</button>
+                </div>
+            </div>
+        </div>
+
+        <h2>Достоинства (Merits)</h2>
+        <div id="meritsArea"></div>
+        <button id="addMeritBtn">+ Добавить Мерит</button>
+
+        <h2>Активные заклинания</h2>
+        <table id="spellsTable">
+            <thead>
+                <tr>
+                    <th>Таинство</th>
+                    <th>Ур.</th>
+                    <th>Заклинание</th>
+                    <th>Создатель</th>
+                    <th>Дайспул</th>
+                    <th>🗑</th>
+                </tr>
+            </thead>
+            <tbody id="spellsBody"></tbody>
+        </table>
+        <button id="addSpellBtn">+ Заклинание</button>
+
+        <h2>Зачарованные предметы</h2>
+        <table id="enchantedTable">
+            <thead>
+                <tr>
+                    <th>Название</th>
+                    <th>Эффект</th>
+                    <th>Дайспул</th>
+                    <th>Мана</th>
+                    <th>🗑</th>
+                </tr>
+            </thead>
+            <tbody id="enchantedBody"></tbody>
+        </table>
+        <button id="addEnchantedBtn">+ Предмет</button>
+
+        <h2>Оружие</h2>
+        <table id="weaponTable">
+            <thead>
+                <tr>
+                    <th>Название</th>
+                    <th>Урон</th>
+                    <th>Дальность</th>
+                    <th>Обойма</th>
+                    <th>Инициатива</th>
+                    <th>Мин. Сила</th>
+                    <th>Размер</th>
+                    <th>🗑</th>
+                </tr>
+            </thead>
+            <tbody id="weaponBody"></tbody>
+        </table>
+        <button id="addWeaponBtn">+ Оружие</button>
+
+        <h2>📖 Квента и Дневник сессий</h2>
+        <div class="row-grid">
+            <div class="card"><label>История мага</label><textarea rows="3" id="historyText"></textarea></div>
+            <div class="card"><label>Кабал / Цели</label><textarea rows="3" id="cabalText"></textarea></div>
+        </div>
+
+        <div id="diaryContainer"></div>
+        <button id="addDiaryBtn" style="margin-top:10px;">+ Запись в дневник сессий</button>
+    </div>
+    </div>
+    <div
+        style="text-align: center; margin-top: 30px; display: flex; justify-content: center; gap: 15px; flex-wrap: wrap;">
+        <button id="manualSaveBtn" style="background: #4a3425; color: #ffecbf; padding: 10px 30px;">💾
+            Сохранить</button>
+
+        <button id="exportJsonBtn" style="background: #2e7d32; color: #ffecbf; padding: 10px 30px;">📤 Экспорт в
+            JSON</button>
+
+        <button id="importJsonBtn" style="background: #1565c0; color: #ffecbf; padding: 10px 30px;"
+            onclick="document.getElementById('importFile').click();">📥 Импорт из JSON</button>
+        <input type="file" id="importFile" accept=".json" style="display: none;">
+    </div>
+    <div id="upgradeModal" class="modal">
+        <div class="modal-content">
+            <h3>✨ Стоимость развития (XP)</h3>
+            <table>
+                <thead>
+                    <tr>
+                        <th>Параметр</th>
+                        <th>Цена</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td>Мерит</td>
+                        <td>1 XP за точку</td>
+                    </tr>
+                    <tr>
+                        <td>Смежный Атрибут</td>
+                        <td>4 XP за точку</td>
+                    </tr>
+                    <tr>
+                        <td>Навык</td>
+                        <td>2 XP за точку</td>
+                    </tr>
+                    <tr>
+                        <td>Правящее Таинство</td>
+                        <td>3 XP за точку</td>
+                    </tr>
+                    <tr>
+                        <td>Обычное Таинство</td>
+                        <td>4 XP за точку</td>
+                    </tr>
+                    <tr>
+                        <td>Гнозис</td>
+                        <td>5 XP за точку</td>
+                    </tr>
+                </tbody>
+            </table>
+            <button id="closeModalBtn">Закрыть</button>
+        </div>
+    </div>
+
+    <script>
+        function makeClickable(containerId, max, initial, isSquare, storageKey, onChange) {
+            let val = Math.min(max, Math.max(0, initial));
+            const container = document.getElementById(containerId);
+            if (!container) return { setValue: () => { }, getValue: () => val };
+
+            function render() {
+                container.innerHTML = '';
+                for (let i = 1; i <= max; i++) {
+                    let s = document.createElement('span');
+                    s.className = isSquare ? 'square' : 'dot';
+                    s.textContent = isSquare ? (i <= val ? '☒' : '□') : (i <= val ? '◉' : '○');
+                    s.onclick = () => {
+                        val = (val === i) ? i - 1 : i;
+                        localStorage.setItem(storageKey, val);
+                        render();
+                        if (onChange) onChange(val);
+                        autoSave();
+                    };
+                    container.appendChild(s);
+                }
+            }
+            render();
+            return {
+                setValue: v => { val = Math.min(max, Math.max(0, v)); render(); },
+                getValue: () => val
+            };
+        }
+
+        let attrObjects = {};
+        let skillObjects = {};
+        let arcanaObjects = {};
+        let gnosisTrack, wisdomTrack;
+        let merits = [], spells = [], enchanted = [], weapons = [], diary = [];
+
+        function updateDerivedStats() {
+            let str = attrObjects['Сила'] ? attrObjects['Сила'].getValue() : 1;
+            let dex = attrObjects['Ловкость'] ? attrObjects['Ловкость'].getValue() : 1;
+            let sta = attrObjects['Выносливость'] ? attrObjects['Выносливость'].getValue() : 1;
+            let wits = attrObjects['Остроумие'] ? attrObjects['Остроумие'].getValue() : 1;
+            let res = attrObjects['Решительность'] ? attrObjects['Решительность'].getValue() : 1;
+            let comp = attrObjects['Самообладание'] ? attrObjects['Самообладание'].getValue() : 1;
+
+            let athl = parseInt(localStorage.getItem('skill_Атлетика') || 0);
+            let size = parseInt(document.getElementById('sizeVal').value || 5);
+
+            document.getElementById('speedVal').innerText = str + dex + 5;
+            document.getElementById('initModVal').innerText = dex + comp;
+            document.getElementById('defenseVal').innerText = Math.min(dex, wits) + athl;
+
+            let maxHealth = sta + size;
+            let maxWill = res + comp;
+            let currentGnosis = gnosisTrack ? gnosisTrack.getValue() : 1;
+            let maxMana = 10 + (currentGnosis - 1);
+
+            makeClickable('healthBoxes', maxHealth, parseInt(localStorage.getItem('health_wounds') || 0), true, 'health_wounds');
+            makeClickable('willpowerBoxes', maxWill, parseInt(localStorage.getItem('will_spent') || 0), true, 'will_spent');
+            makeClickable('manaBoxes', maxMana, parseInt(localStorage.getItem('mana_spent') || 0), false, 'mana_spent');
+
+            let attrTotal = 0; Object.values(attrObjects).forEach(o => attrTotal += o.getValue());
+            let skillTotal = 0; Object.values(skillObjects).forEach(o => skillTotal += o.getValue());
+            let arcTotal = 0; Object.values(arcanaObjects).forEach(o => arcTotal += o.getValue());
+            let meritTotal = 0; merits.forEach(m => meritTotal += m.rank);
+
+            document.getElementById('pointsSummary').innerHTML = `📊 Атрибуты: ${attrTotal} | Навыки: ${skillTotal} | Таинства: ${arcTotal} | Мериты: ${meritTotal}`;
+        }
+
+        // Инициализация Атрибутов
+        const attrKeys = { strength: 'Сила', dexterity: 'Ловкость', stamina: 'Выносливость', intelligence: 'Интеллект', wits: 'Остроумие', resolve: 'Решительность', presence: 'Присутствие', manipulation: 'Манипулирование', composure: 'Самообладание' };
+        for (let [id, name] of Object.entries(attrKeys)) {
+            let row = document.getElementById(`attr-${id}`);
+            row.innerHTML = `<span class="skill-name">${name}</span><span id="dots_${id}"></span>`;
+            attrObjects[name] = makeClickable(`dots_${id}`, 5, parseInt(localStorage.getItem(`attr_${name}`) || 1), false, `attr_${name}`, updateDerivedStats);
+        }
+
+        // Инициализация Навыков
+        const skillSets = {
+            mental: ["Академические", "Компьютер", "Ремесло", "Исследование", "Медицина", "Оккультизм", "Политика", "Наука"],
+            physical: ["Атлетика", "Драка", "Вождение", "Огнестрельное", "Воровство", "Скрытность", "Выживание", "Холодное оружие"],
+            social: ["Знание животных", "Эмпатия", "Экспрессия", "Запугивание", "Убеждение", "Социализация", "Общение", "Знание улиц", "Хитрость"]
+        };
+        for (let [group, skills] of Object.entries(skillSets)) {
+            let container = document.getElementById(`${group}-skills`);
+            container.innerHTML = '';
+            skills.forEach(s => {
+                let div = document.createElement('div'); div.className = 'skill-row';
+                div.innerHTML = `<span class="skill-name">${s}</span><span id="skilldots_${s}"></span>`;
+                container.appendChild(div);
+                skillObjects[s] = makeClickable(`skilldots_${s}`, 5, parseInt(localStorage.getItem(`skill_${s}`) || 0), false, `skill_${s}`, updateDerivedStats);
+            });
+        }
+
+        // Инициализация Таинств
+        const arcana = ["Смерть", "Судьба", "Силы", "Жизнь", "Материя", "Разум", "Основы", "Пространство", "Дух", "Время"];
+        const arcContainer = document.getElementById('arcanaContainer'); arcContainer.innerHTML = '';
+        arcana.forEach(a => {
+            let tile = document.createElement('div'); tile.className = 'arcana-tile';
+            tile.innerHTML = `<span>${a}</span><span id="arcdots_${a}"></span>`;
+            arcContainer.appendChild(tile);
+            arcanaObjects[a] = makeClickable(`arcdots_${a}`, 5, parseInt(localStorage.getItem(`arcanum_${a}`) || 0), false, `arcanum_${a}`, updateDerivedStats);
+        });
+
+        gnosisTrack = makeClickable('gnosisBoxes', 10, parseInt(localStorage.getItem('gnosis') || 1), false, 'gnosis', updateDerivedStats);
+        wisdomTrack = makeClickable('wisdomBoxes', 10, parseInt(localStorage.getItem('wisdom') || 7), false, 'wisdom');
+
+        // Опыт и такты (Переписанная логика)
+        let beats = parseInt(localStorage.getItem('beats') || 0);
+        let xp = parseInt(localStorage.getItem('xpTotal') || 0);
+        let mBeats = parseInt(localStorage.getItem('mageBeats') || 0);
+        let mXp = parseInt(localStorage.getItem('mageXp') || 0);
+
+        function adjustXp(amount) {
+            xp = Math.max(0, xp + amount);
+            localStorage.setItem('xpTotal', xp);
+            document.getElementById('xpTotal').innerText = xp;
+        }
+
+        function adjustArcaneXp(amount) {
+            mXp = Math.max(0, mXp + amount);
+            localStorage.setItem('mageXp', mXp);
+            document.getElementById('arcaneXpVal').innerText = mXp;
+        }
+
+        function renderTracks() {
+            // Обычные такты
+            const beatCont = document.getElementById('beatsBoxes'); beatCont.innerHTML = '';
+            for (let i = 1; i <= 5; i++) {
+                let s = document.createElement('span'); s.className = 'square'; s.textContent = i <= beats ? '☒' : '□';
+                s.onclick = () => {
+                    beats = (beats === i) ? i - 1 : i;
+                    localStorage.setItem('beats', beats);
+                    renderTracks();
+                };
+                beatCont.appendChild(s);
+            }
+            // Магические такты
+            const mBeatCont = document.getElementById('mageBeatsBoxes'); mBeatCont.innerHTML = '';
+            for (let i = 1; i <= 5; i++) {
+                let s = document.createElement('span'); s.className = 'square'; s.textContent = i <= mBeats ? '☒' : '□';
+                s.onclick = () => {
+                    mBeats = (mBeats === i) ? i - 1 : i;
+                    localStorage.setItem('mageBeats', mBeats);
+                    renderTracks();
+                };
+                mBeatCont.appendChild(s);
+            }
+            document.getElementById('xpTotal').innerText = xp;
+            document.getElementById('arcaneXpVal').innerText = mXp;
+        }
+
+        // Мериты
+        function renderMerits() {
+            let area = document.getElementById('meritsArea'); area.innerHTML = '';
+            merits.forEach((m, i) => {
+                let row = document.createElement('div'); row.className = 'merit-row';
+                row.innerHTML = `<input value="${m.name || ''}" placeholder="Мерит" style="flex:2" id="meritName_${i}"><span id="meritDots_${i}"></span><button onclick="merits.splice(${i},1); localStorage.setItem('merits', JSON.stringify(merits)); renderMerits(); updateDerivedStats();">🗑</button>`;
+                area.appendChild(row);
+                makeClickable(`meritDots_${i}`, 5, m.rank || 1, false, `merit_rank_temp_${i}`, (v) => { merits[i].rank = v; localStorage.setItem('merits', JSON.stringify(merits)); updateDerivedStats(); });
+                document.getElementById(`meritName_${i}`).onchange = e => { merits[i].name = e.target.value; localStorage.setItem('merits', JSON.stringify(merits)); };
+            });
+        }
+        document.getElementById('addMeritBtn').onclick = () => { merits.push({ name: '', rank: 1 }); renderMerits(); };
+
+        // Сохранение таблиц
+        function saveTableData(type, index, field, value) {
+            if (type === 'spell') spells[index][field] = value;
+            if (type === 'ench') enchanted[index][field] = value;
+            if (type === 'weapon') weapons[index][field] = value;
+            localStorage.setItem(type + 's', JSON.stringify(type === 'spell' ? spells : type === 'ench' ? enchanted : weapons));
+        }
+
+        function renderSpells() {
+            let tbody = document.getElementById('spellsBody'); tbody.innerHTML = '';
+            spells.forEach((s, i) => {
+                let row = tbody.insertRow();
+                row.innerHTML = `
+                <td><input value="${s.arcanum || ''}" oninput="saveTableData('spell', ${i}, 'arcanum', this.value)"></td>
+                <td><input value="${s.level || ''}" style="width:50px" oninput="saveTableData('spell', ${i}, 'level', this.value)"></td>
+                <td><input value="${s.name || ''}" oninput="saveTableData('spell', ${i}, 'name', this.value)"></td>
+                <td><input value="${s.creator || ''}" oninput="saveTableData('spell', ${i}, 'creator', this.value)"></td>
+                <td><input value="${s.skill || ''}" oninput="saveTableData('spell', ${i}, 'skill', this.value)"></td>
+                <td><button onclick="spells.splice(${i},1); localStorage.setItem('spells', JSON.stringify(spells)); renderSpells();">🗑</button></td>
+            `;
+            });
+        }
+        document.getElementById('addSpellBtn').onclick = () => { spells.push({}); renderSpells(); };
+
+        function renderEnchanted() {
+            let body = document.getElementById('enchantedBody'); body.innerHTML = '';
+            enchanted.forEach((e, i) => {
+                let row = body.insertRow();
+                row.innerHTML = `
+                <td><input value="${e.type || ''}" oninput="saveTableData('ench', ${i}, 'type', this.value)"></td>
+                <td><input value="${e.power || ''}" oninput="saveTableData('ench', ${i}, 'power', this.value)"></td>
+                <td><input value="${e.dice || ''}" oninput="saveTableData('ench', ${i}, 'dice', this.value)"></td>
+                <td><input value="${e.mana || ''}" oninput="saveTableData('ench', ${i}, 'mana', this.value)"></td>
+                <td><button onclick="enchanted.splice(${i},1); localStorage.setItem('enchanted', JSON.stringify(enchanted)); renderEnchanted();">🗑</button></td>
+            `;
+            });
+        }
+        document.getElementById('addEnchantedBtn').onclick = () => { enchanted.push({}); renderEnchanted(); };
+
+        function renderWeapons() {
+            let body = document.getElementById('weaponBody'); body.innerHTML = '';
+            weapons.forEach((w, i) => {
+                let row = body.insertRow();
+                row.innerHTML = `
+                <td><input value="${w.name || ''}" oninput="saveTableData('weapon', ${i}, 'name', this.value)"></td>
+                <td><input value="${w.damage || ''}" style="width:50px" oninput="saveTableData('weapon', ${i}, 'damage', this.value)"></td>
+                <td><input value="${w.range || ''}" oninput="saveTableData('weapon', ${i}, 'range', this.value)"></td>
+                <td><input value="${w.clip || ''}" style="width:50px" oninput="saveTableData('weapon', ${i}, 'clip', this.value)"></td>
+                <td><input value="${w.init || ''}" style="width:50px" oninput="saveTableData('weapon', ${i}, 'init', this.value)"></td>
+                <td><input value="${w.str || ''}" style="width:50px" oninput="saveTableData('weapon', ${i}, 'str', this.value)"></td>
+                <td><input value="${w.size || ''}" style="width:50px" oninput="saveTableData('weapon', ${i}, 'size', this.value)"></td>
+                <td><button onclick="weapons.splice(${i},1); localStorage.setItem('weapons', JSON.stringify(weapons)); renderWeapons();">🗑</button></td>
+            `;
+            });
+        }
+        document.getElementById('addWeaponBtn').onclick = () => { weapons.push({}); renderWeapons(); };
+
+        // Дневник
+        function renderDiary() {
+            let cont = document.getElementById('diaryContainer'); cont.innerHTML = '';
+            diary.forEach((entry, i) => {
+                let div = document.createElement('div'); div.className = 'diary-entry';
+                div.innerHTML = `<strong>📅 ${entry.date}</strong><textarea rows="3">${entry.text || ''}</textarea><button style="width:40px; margin-top:5px;">🗑</button>`;
+                div.querySelector('textarea').oninput = e => { diary[i].text = e.target.value; localStorage.setItem('diary', JSON.stringify(diary)); };
+                div.querySelector('button').onclick = () => { diary.splice(i, 1); localStorage.setItem('diary', JSON.stringify(diary)); renderDiary(); };
+                cont.appendChild(div);
+            });
+        }
+        document.getElementById('addDiaryBtn').onclick = () => { let today = new Date().toLocaleDateString('ru-RU'); diary.push({ date: today, text: '' }); renderDiary(); };
+
+        // Автосохранение
+        const textFields = ['shadowName', 'concept', 'path', 'player', 'virtue', 'order', 'chronicle', 'vice', 'legacy', 'historyText', 'cabalText', 'sizeVal', 'armorVal'];
+        function saveData() { textFields.forEach(id => { let el = document.getElementById(id); if (el) localStorage.setItem(id, el.value); }); }
+        function autoSave() { saveData(); let n = document.getElementById('saveNotification'); if (!n) { n = document.createElement('div'); n.id = 'saveNotification'; n.className = 'save-notification'; n.innerText = '✓ Сохранено'; document.body.appendChild(n); } n.style.opacity = '1'; setTimeout(() => n.style.opacity = '0', 800); }
+
+        textFields.forEach(id => {
+            let el = document.getElementById(id);
+            if (el) {
+                el.value = localStorage.getItem(id) || (el.tagName === 'SELECT' ? el.options[0].value : (id.includes('Val') ? 0 : ''));
+                if (id === 'sizeVal' && !localStorage.getItem(id)) el.value = 5;
+                el.addEventListener('input', () => { updateDerivedStats(); autoSave(); });
+            }
+        });
+
+        if (localStorage.getItem('spells')) spells = JSON.parse(localStorage.getItem('spells'));
+        if (localStorage.getItem('enchanted')) enchanted = JSON.parse(localStorage.getItem('enchanted'));
+        if (localStorage.getItem('weapons')) weapons = JSON.parse(localStorage.getItem('weapons'));
+        if (localStorage.getItem('diary')) diary = JSON.parse(localStorage.getItem('diary'));
+        if (localStorage.getItem('merits')) merits = JSON.parse(localStorage.getItem('merits'));
+
+        renderTracks(); renderMerits(); renderSpells(); renderEnchanted(); renderWeapons(); renderDiary(); updateDerivedStats();
+
+        // Тема
+        function initTheme() {
+            let isDark = localStorage.getItem('darkTheme') !== 'disabled';
+            if (isDark) document.body.classList.add('dark'); else document.body.classList.remove('dark');
+            document.getElementById('themeBtn').innerText = isDark ? '☀️ Светлая тема' : '🌙 Тёмная тема';
+        }
+        document.getElementById('themeBtn').onclick = () => {
+            document.body.classList.toggle('dark');
+            localStorage.setItem('darkTheme', document.body.classList.contains('dark') ? 'enabled' : 'disabled');
+            initTheme();
+        };
+        initTheme();
+
+        const modal = document.getElementById('upgradeModal');
+        document.getElementById('buyUpgradeBtn').onclick = () => modal.classList.add('visible');
+        document.getElementById('closeModalBtn').onclick = () => modal.classList.remove('visible');
+        setInterval(autoSave, 20000);
+        // Ручное сохранение по кнопке
+        document.getElementById('manualSaveBtn')?.addEventListener('click', () => {
+            autoSave();
+            alert('Данные сохранены в браузере!');
+        });
+
+        // Экспорт всех данных в JSON
+        document.getElementById('exportJsonBtn')?.addEventListener('click', () => {
+            saveData();
+
+            const characterData = {
+                shadowName: localStorage.getItem('shadowName') || '',
+                concept: localStorage.getItem('concept') || '',
+                path: localStorage.getItem('path') || 'Акантус',
+                player: localStorage.getItem('player') || '',
+                virtue: localStorage.getItem('virtue') || '',
+                order: localStorage.getItem('order') || 'Серебряная Лестница',
+                chronicle: localStorage.getItem('chronicle') || '',
+                vice: localStorage.getItem('vice') || '',
+                legacy: localStorage.getItem('legacy') || '',
+                historyText: localStorage.getItem('historyText') || '',
+                cabalText: localStorage.getItem('cabalText') || '',
+                sizeVal: localStorage.getItem('sizeVal') || '5',
+                armorVal: localStorage.getItem('armorVal') || '0',
+                xpTotal: parseInt(localStorage.getItem('xpTotal') || 0),
+                beats: parseInt(localStorage.getItem('beats') || 0),
+                mageBeats: parseInt(localStorage.getItem('mageBeats') || 0),
+                mageXp: parseInt(localStorage.getItem('mageXp') || 0),
+                gnosis: parseInt(localStorage.getItem('gnosis') || 1),
+                wisdom: parseInt(localStorage.getItem('wisdom') || 7),
+                health_wounds: parseInt(localStorage.getItem('health_wounds') || 0),
+                will_spent: parseInt(localStorage.getItem('will_spent') || 0),
+                mana_spent: parseInt(localStorage.getItem('mana_spent') || 0),
+                attributes: {},
+                skills: {},
+                arcana: {},
+                merits: JSON.parse(localStorage.getItem('merits') || '[]'),
+                spells: JSON.parse(localStorage.getItem('spells') || '[]'),
+                enchanted: JSON.parse(localStorage.getItem('enchanted') || '[]'),
+                weapons: JSON.parse(localStorage.getItem('weapons') || '[]'),
+                diary: JSON.parse(localStorage.getItem('diary') || '[]')
+            };
+
+            Object.values(attrKeys).forEach(name => {
+                characterData.attributes[name] = parseInt(localStorage.getItem(`attr_${name}`) || 1);
+            });
+            for (let group in skillSets) {
+                skillSets[group].forEach(s => { characterData.skills[s] = parseInt(localStorage.getItem(`skill_${s}`) || 0); });
+            }
+            arcana.forEach(a => { characterData.arcana[a] = parseInt(localStorage.getItem(`arcanum_${a}`) || 0); });
+
+            const jsonString = JSON.stringify(characterData, null, 4);
+            const blob = new Blob([jsonString], { type: "application/json" });
+            const link = document.createElement("a");
+            const charName = characterData.shadowName.trim() || "Mage_Character";
+            link.download = `${charName}_sheet.json`;
+            link.href = URL.createObjectURL(blob);
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+        });
+
+        // Импорт данных из JSON
+        document.getElementById('importFile')?.addEventListener('change', (event) => {
+            const file = event.target.files[0];
+            if (!file) return;
+
+            const reader = new FileReader();
+            reader.onload = function (e) {
+                try {
+                    const data = JSON.parse(e.target.result);
+
+                    // Запись простых полей в localStorage
+                    const simpleFields = ['shadowName', 'concept', 'path', 'player', 'virtue', 'order', 'chronicle', 'vice', 'legacy', 'historyText', 'cabalText', 'sizeVal', 'armorVal', 'xpTotal', 'beats', 'mageBeats', 'mageXp', 'gnosis', 'wisdom', 'health_wounds', 'will_spent', 'mana_spent'];
+                    simpleFields.forEach(field => {
+                        if (data[field] !== undefined) localStorage.setItem(field, data[field]);
+                    });
+
+                    // Восстановление Атрибутов
+                    if (data.attributes) {
+                        Object.entries(data.attributes).forEach(([name, val]) => localStorage.setItem(`attr_${name}`, val));
+                    }
+                    // Восстановление Навыков
+                    if (data.skills) {
+                        Object.entries(data.skills).forEach(([name, val]) => localStorage.setItem(`skill_${name}`, val));
+                    }
+                    // Восстановление Таинств
+                    if (data.arcana) {
+                        Object.entries(data.arcana).forEach(([name, val]) => localStorage.setItem(`arcanum_${name}`, val));
+                    }
+
+                    // Восстановление таблиц и массивов
+                    if (data.merits) localStorage.setItem('merits', JSON.stringify(data.merits));
+                    if (data.spells) localStorage.setItem('spells', JSON.stringify(data.spells));
+                    if (data.enchanted) localStorage.setItem('enchanted', JSON.stringify(data.enchanted));
+                    if (data.weapons) localStorage.setItem('weapons', JSON.stringify(data.weapons));
+                    if (data.diary) localStorage.setItem('diary', JSON.stringify(data.diary));
+
+                    // Принудительно обновляем глобальные переменные скрипта, чтобы интерфейс перерисовывался актуальными данными
+                    beats = parseInt(localStorage.getItem('beats') || 0);
+                    xp = parseInt(localStorage.getItem('xpTotal') || 0);
+                    mBeats = parseInt(localStorage.getItem('mageBeats') || 0);
+                    mXp = parseInt(localStorage.getItem('mageXp') || 0);
+                    merits = data.merits || [];
+                    spells = data.spells || [];
+                    enchanted = data.enchanted || [];
+                    weapons = data.weapons || [];
+                    diary = data.diary || [];
+
+                    // Синхронизируем текстовые поля ввода на экране
+                    textFields.forEach(id => {
+                        let el = document.getElementById(id);
+                        if (el) el.value = localStorage.getItem(id) || '';
+                    });
+
+                    // Переинициализируем интерактивные точки для Атрибутов, Навыков и Гнозиса
+                    for (let [id, name] of Object.entries(attrKeys)) {
+                        attrObjects[name].setValue(parseInt(localStorage.getItem(`attr_${name}`) || 1));
+                    }
+                    for (let [group, skills] of Object.entries(skillSets)) {
+                        skills.forEach(s => skillObjects[s].setValue(parseInt(localStorage.getItem(`skill_${s}`) || 0)));
+                    }
+                    arcana.forEach(a => arcanaObjects[a].setValue(parseInt(localStorage.getItem(`arcanum_${a}`) || 0)));
+                    gnosisTrack.setValue(parseInt(localStorage.getItem('gnosis') || 1));
+                    wisdomTrack.setValue(parseInt(localStorage.getItem('wisdom') || 7));
+
+                    // Перерисовываем интерфейс
+                    renderTracks(); renderMerits(); renderSpells(); renderEnchanted(); renderWeapons(); renderDiary(); updateDerivedStats();
+
+                    alert('Персонаж успешно загружен!');
+                } catch (err) {
+                    alert('Ошибка при чтении файла JSON: ' + err.message);
+                }
+            };
+            reader.readAsText(file);
+            // Сбрасываем значение, чтобы можно было загрузить один и тот же файл дважды подряд
+            event.target.value = '';
+        });
+
+        // Сохранение при закрытии страницы
+        window.addEventListener('beforeunload', () => {
+            autoSave();
+        });
+    </script>
+    </script>
+</body>
+
+</html>
